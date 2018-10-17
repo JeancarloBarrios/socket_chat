@@ -11,8 +11,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <poll.h>
-#include <sys/fcntl.h>
-#include <sys/ioctl.h>
 
 #include <string.h>
 
