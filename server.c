@@ -53,23 +53,6 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-
-
-
-// No need for this anymore apparently ioctl was replaced by fcntl and fcntl can be not called if SOCKET_NONBLOCL IS PASSED IN its creation
-//    To emulate a True value also this is
-//    int on = TRUE;
-//    if ( ioctl(master_socket, FIONBIO, (char *)&on) < 0) {
-////        perror("Failed on fcntl");
-////
-////        exit(EXIT_FAILURE);
-////    }
-//    if ( fcntl(master_socket, O_NONBLOCK, (char *)&on) < 0) {
-//        perror("Failed on fcntl");
-//
-//        exit(EXIT_FAILURE);
-//    }
-
     struct sockaddr_in socket_address;
     memset(&socket_address, 0, sizeof(socket_address));
     socket_address.sin_family = AF_INET;
