@@ -2,3 +2,5 @@
 
 CMakeFiles*
 cmake-build-debug*
+server
+client
