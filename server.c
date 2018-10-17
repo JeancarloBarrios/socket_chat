@@ -12,6 +12,7 @@
 #include <netdb.h>
 #include <poll.h>
 
+#include <json.h>
 #include <string.h>
 
 #pragma clang diagnostic push
@@ -23,7 +24,15 @@
 #define POLL_SIZE 32
 #define LISTEN_QUEUE 5
 
+struct user {
+    const char* id;
+    const char* name;
+};
+
+
+
 int main(int argc, char *argv[]) {
+
     int master_socket, max_clients;
     int opt = TRUE;
     char buffer[1025];
@@ -56,7 +65,6 @@ int main(int argc, char *argv[]) {
     socket_address.sin_family = AF_INET;
     socket_address.sin_port = htons(port);
     socket_address.sin_addr.s_addr = INADDR_ANY;
-//    socket_address.sin_addr.s_addr = inet_addr("0.0.0.0");
 
     if ( bind(master_socket, (struct sockaddr *)&socket_address, sizeof(socket_address)) < 0) {
         perror("Failed on Bind");
@@ -72,7 +80,7 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Server on Port %d \n", port);
-    int address_length;
+    int address_length = sizeof(socket_address);
     puts("Machete Server: Waiting For Connections ...");
     int new_sd = -1;
     struct pollfd poll_set[max_clients];
@@ -84,6 +92,7 @@ int main(int argc, char *argv[]) {
     int compress_array = FALSE;
     int poll_flag, current_size, close_conn, rx, tx, len;
     int end_server = FALSE;
+
     while(end_server == FALSE) {
         printf("Starting POLL...\n");
         poll_flag = poll(poll_set, num_fds, timeout);
@@ -110,7 +119,7 @@ int main(int argc, char *argv[]) {
                 printf(" Listening socket is readable\n");
 
                 do {
-                    new_sd = accept(master_socket, NULL, NULL);
+                    new_sd = accept(master_socket, (struct sockaddr *)&socket_address, (socklen_t *)&address_length);
                     if (new_sd < 0){
                         if (errno != EWOULDBLOCK){
                             perror("  accept() failed");

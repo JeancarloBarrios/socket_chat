@@ -123,32 +123,32 @@ server/fast:
 	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/build
 .PHONY : server/fast
 
-poll.o: poll.c.o
+select.o: select.c.o
 
-.PHONY : poll.o
+.PHONY : select.o
 
 # target to build an object file
-poll.c.o:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/poll.c.o
-.PHONY : poll.c.o
+select.c.o:
+	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/select.c.o
+.PHONY : select.c.o
 
-poll.i: poll.c.i
+select.i: select.c.i
 
-.PHONY : poll.i
+.PHONY : select.i
 
 # target to preprocess a source file
-poll.c.i:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/poll.c.i
-.PHONY : poll.c.i
+select.c.i:
+	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/select.c.i
+.PHONY : select.c.i
 
-poll.s: poll.c.s
+select.s: select.c.s
 
-.PHONY : poll.s
+.PHONY : select.s
 
 # target to generate assembly for a file
-poll.c.s:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/poll.c.s
-.PHONY : poll.c.s
+select.c.s:
+	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/select.c.s
+.PHONY : select.c.s
 
 server.o: server.c.o
 
@@ -176,33 +176,6 @@ server.s: server.c.s
 server.c.s:
 	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server.c.s
 .PHONY : server.c.s
-
-server_@.o: server_@.c.o
-
-.PHONY : server_@.o
-
-# target to build an object file
-server_@.c.o:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server_@.c.o
-.PHONY : server_@.c.o
-
-server_@.i: server_@.c.i
-
-.PHONY : server_@.i
-
-# target to preprocess a source file
-server_@.c.i:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server_@.c.i
-.PHONY : server_@.c.i
-
-server_@.s: server_@.c.s
-
-.PHONY : server_@.s
-
-# target to generate assembly for a file
-server_@.c.s:
-	$(MAKE) -f CMakeFiles/server.dir/build.make CMakeFiles/server.dir/server_@.c.s
-.PHONY : server_@.c.s
 
 utils.o: utils.c.o
 
@@ -240,15 +213,12 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... server"
-	@echo "... poll.o"
-	@echo "... poll.i"
-	@echo "... poll.s"
+	@echo "... select.o"
+	@echo "... select.i"
+	@echo "... select.s"
 	@echo "... server.o"
 	@echo "... server.i"
 	@echo "... server.s"
-	@echo "... server_@.o"
-	@echo "... server_@.i"
-	@echo "... server_@.s"
 	@echo "... utils.o"
 	@echo "... utils.i"
 	@echo "... utils.s"
