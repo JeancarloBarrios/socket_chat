@@ -90,6 +90,15 @@ struct json_object * user_json_obj(struct user user){
     return user_obj;
 }
 
+struct json_object * change_status(struct user user){
+    struct json_object *object, *tmp;
+    object = json_object_new_object();
+    tmp = json_object_new_string("CHANGED_STATUS");
+    json_object_object_add(object, "action", tmp);
+    json_object_object_add(object, "user", user_json_obj(user));
+    return object;
+}
+
 
 struct json_object * list_user_base(struct json_object *users){
     struct json_object *tmp, *object;
@@ -252,6 +261,7 @@ int main(int argc, char *argv[]) {
     int poll_flag, current_size, close_conn, rx, tx, len;
     int end_server = FALSE;
     char * action, response;
+    char* ok = json_object_to_json_string(status_ok());
 
     //  List Init
     LIST_HEAD(user_list, user) head;
@@ -304,6 +314,7 @@ int main(int argc, char *argv[]) {
                 close_conn = FALSE;
 
                 do {
+                    memset(&buffer, 0, sizeof(buffer));
                     rx = recv(poll_set[i].fd, buffer, sizeof(buffer), 0);
                     printf("  Receive data %d for fd \n", poll_set[i].fd);
                     if (rx < 0) {
@@ -317,6 +328,38 @@ int main(int argc, char *argv[]) {
                     {
                         printf("  Connection closed\n");
                         close_conn = TRUE;
+                        node_1 = LIST_FIRST(&head);
+                        char * response;
+                        while (node_1 != NULL)
+                        {
+                            if (node_1->id == poll_set[i].fd)
+                            {
+                                response = json_object_to_json_string(new_user_action(*node_1, "USER_DISCONNECTED"));
+                                break;
+                            }
+                            node_2 = LIST_NEXT(node_1, pointers);
+                            if (node_2 == NULL){
+                                break;
+                            }
+                            node_1 = node_2;
+                        }
+                        LIST_REMOVE(node_1, pointers);
+                        free(node_1);
+                        node_1 = LIST_FIRST(&head);
+                        while (node_1 != NULL)
+                        {
+                            if (send(node_1->id, response, strlen(response), 0) < 0){
+                                perror("  send() failed");
+                                close_conn = TRUE;
+                                break;
+                            }
+                            node_2 = LIST_NEXT(node_1, pointers);
+                            if (node_2 == NULL){
+                                break;
+                            }
+                            node_1 = node_2;
+                        }
+                        close(poll_set[i].fd);
                         break;
                     }
                     len = rx;
@@ -324,7 +367,29 @@ int main(int argc, char *argv[]) {
                     printf("  %d bytes received\n", len);
                     printf("JSON is:  %s \n", json_object_to_json_string(jobj));
                     //  Posible Actions to Take
-
+                    if (strcmp (buffer, "bye") == 0){
+                        if (send(poll_set[i].fd, buffer, rx, 0) < 0){
+                            perror("  send() failed");
+                            close_conn = TRUE;
+                            break;
+                        }
+                        node_1 = LIST_FIRST(&head);
+                        while (node_1 != NULL)
+                        {
+                            if (node_1->id == poll_set[i].fd)
+                            {
+                                LIST_REMOVE(node_1, pointers);
+                                free(node_1);
+                                break;
+                            }
+                            node_2 = LIST_NEXT(node_1, pointers);
+                            if (node_2 == NULL){
+                                break;
+                            }
+                            node_1 = node_2;
+                        }
+                        close(poll_set[i].fd);
+                    }
                     if (json_object_object_get_ex(jobj, "action", &tmp) == 1){
                         action = json_object_get_string(tmp);
                         printf("ACTION: %s", action);
@@ -351,7 +416,6 @@ int main(int argc, char *argv[]) {
                                         close_conn = TRUE;
                                         break;
                                     }
-                                    char* ok = json_object_to_json_string(status_ok());
                                     printf("RESPOND OK: %s \n", ok);
                                     if (send(poll_set[i].fd, ok, strlen(ok), 0) < 0){
                                         perror("  send() failed");
@@ -388,6 +452,56 @@ int main(int argc, char *argv[]) {
                                 perror("  send() failed");
                                 close_conn = TRUE;
                                 break;
+                            }
+
+                        }
+                        if (strcmp (action, "CHANGE_STATUS") == 0)
+                        {
+                            json_object_object_get_ex(jobj, "user", &tmp);
+                            int user_id = strtol(json_object_get_string(tmp), NULL, 10);
+                            json_object_object_get_ex(jobj, "status", &tmp);
+                            char * new_status = json_object_get_string(tmp);
+                            node_1 = LIST_FIRST(&head);
+                            while (node_1 != NULL)
+                            {
+                                if (node_1->id == user_id){
+                                    node_1->status = new_status;
+                                    break;
+                                }
+
+                                node_2 = LIST_NEXT(node_1, pointers);
+                                if (node_2 == NULL){
+                                    break;
+                                }
+                                node_1 = node_2;
+                            }
+                            char* change_status_response = json_object_to_json_string(change_status(*node_1));
+                            if (send(poll_set[i].fd, ok, strlen(ok), 0) < 0){
+                                perror("  send() failed");
+                                close_conn = TRUE;
+                                break;
+                            }
+                            node_1 = LIST_FIRST(&head);
+                            while (node_1 != NULL) {
+                                if (node_1->id == poll_set[i].fd){
+                                    node_2 = LIST_NEXT(node_1, pointers);
+                                    if (node_2 == NULL){
+                                        break;
+                                    }
+                                    node_1 = node_2;
+                                    continue;
+                                }
+                                printf("RESPONSE IS: %s \n", change_status_response);
+                                if (send(node_1->id, change_status_response, strlen(change_status_response), 0) < 0){
+                                    perror("  send() failed");
+                                    close_conn = TRUE;
+                                    break;
+                                }
+                                node_2 = LIST_NEXT(node_1, pointers);
+                                if (node_2 == NULL){
+                                    break;
+                                }
+                                node_1 = node_2;
                             }
 
                         }
@@ -458,6 +572,21 @@ int main(int argc, char *argv[]) {
                         }
 
 
+                    }
+                    else
+                    {
+                        char * response;
+                        struct response_error *error_struct;
+                        error_struct = malloc(sizeof(struct message));
+                        error_struct->status = "ERROR";
+                        error_struct->message = "Invalid Action";
+                        response = json_object_to_json_string(error_json(*error_struct));
+                        printf("RESPONSE IS: %s \n", response);
+                        if (send(poll_set[i].fd, response, strlen(response), 0) < 0){
+                            perror("  send() failed");
+                            close_conn = TRUE;
+                            break;
+                        }
                     }
                     LIST_FOREACH(node_tmp, &head, pointers)
                     printf("ID in Node is: %d \n", node_tmp -> id);

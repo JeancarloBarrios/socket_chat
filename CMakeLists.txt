@@ -11,8 +11,7 @@ include_directories (
 
 
 
-#add_executable(socket_chat main.c server.c utils.c utils.h client.c)
-add_executable(server server.c utils.c utils.h select.c)
-#add_executable(client client.c utils.c utils.h)
+add_executable(server server.c)
+add_executable(client client.c client2.c)
 target_link_libraries (server ${JSONC_LIBRARIES})
-#target_link_libraries (client ${JSONC_LIBRARIES})
+target_link_libraries (client ${JSONC_LIBRARIES})
