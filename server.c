@@ -13,6 +13,7 @@
 #include <poll.h>
 
 #include <json.h>
+#include <sys/queue.h>
 #include <string.h>
 
 #pragma clang diagnostic push
@@ -25,13 +26,113 @@
 #define LISTEN_QUEUE 5
 
 struct user {
-    const char* id;
-    const char* name;
+    int id;
+    char* name;
+    char* status;
 };
 
+struct message {
+    char* action;
+    char* from;
+    char* to;
+    char* message;
+};
 
+struct response_error {
+    char* status;
+    char* message;
+};
+
+struct json_object * message_json(struct message message){
+    struct json_object *tmp, *obj;
+    obj = json_object_new_object();
+    tmp = json_object_new_string(message.action);
+    json_object_object_add(obj, "action", tmp);
+    tmp = json_object_new_string(message.from);
+    json_object_object_add(obj, "from", tmp);
+    tmp = json_object_new_string(message.to);
+    json_object_object_add(obj, "to", tmp);
+    tmp = json_object_new_string(message.message);
+    json_object_object_add(obj, "message", tmp);
+    return obj;
+}
+
+struct json_object * error_json(struct response_error error){
+    struct json_object *tmp, *obj;
+    obj = json_object_new_object();
+    tmp = json_object_new_string(error.status);
+    json_object_object_add(obj, "status", tmp);
+    tmp = json_object_new_string(error.message);
+    json_object_object_add(obj, "message", tmp);
+    return obj;
+}
+
+struct json_object * user_json_obj(struct user user){
+    struct json_object *tmp, *user_obj;
+    user_obj = json_object_new_object();
+    tmp = json_object_new_int(user.id);
+    json_object_object_add(user_obj, "id", tmp);
+    tmp = json_object_new_string(user.name);
+    json_object_object_add(user_obj, "name", tmp);
+    tmp = json_object_new_string(user.status);
+    json_object_object_add(user_obj, "status", tmp);
+    return user_obj;
+}
+
+struct json_object * new_user_action(struct user user, char *action){
+    struct json_object *tmp, *object;
+    object = json_object_new_object();
+    tmp = json_object_new_string(action);
+    json_object_object_add(object, "action", tmp);
+    json_object_object_add(object, "user", user_json_obj(user));
+    return object;
+}
+
+struct json_object * accept_user(struct user user){
+    struct json_object *tmp, *object;
+    object = json_object_new_object();
+    tmp = json_object_new_string("OK");
+    json_object_object_add(object, "status", tmp);
+    json_object_object_add(object, "user", user_json_obj(user));
+    return object;
+}
+
+struct user * reducer(struct user state[], json_object * obj){
+    struct json_object *tmp, *object;
+    if (json_object_object_get_ex(obj, "action", &tmp) == 1){
+
+    } else if (json_object_object_get_ex(obj, "user", &tmp) == 1 && json_object_object_get_ex(obj, "origin", &tmp) == 1 ){
+
+    }
+}
 
 int main(int argc, char *argv[]) {
+//    JSON TEST
+    struct json_object *jobj;
+//    char *str = "{\"test\": \"test\"}";
+    struct user user;
+    user.status = "active";
+    user.id = 1;
+    user.name = "test";
+    const char *str = json_object_to_json_string(new_user_action(user, "THE_ACTION"));
+    printf("str:\n---\n%s\n---\n\n", str);
+
+    jobj = json_tokener_parse(str);
+    struct json_object* test;
+//    json_object_object_get_ex(jobj, "test", &test);
+    if (json_object_object_get_ex(jobj, "test2", &test) != NULL){
+
+        printf("%s", json_object_to_json_string(test));
+    }
+    else {
+        printf("Key Does not exisst");
+    }
+
+//    LIST TEST
+
+
+
+    // SERVER CODE
 
     int master_socket, max_clients;
     int opt = TRUE;
@@ -88,7 +189,7 @@ int main(int argc, char *argv[]) {
     memset(poll_set, 0, sizeof(poll_set));
     poll_set[0].fd = master_socket;
     poll_set[0].events = POLLIN;
-    int timeout = (10000 * 5);
+    int timeout = (1000 * 60 * 10);
     int compress_array = FALSE;
     int poll_flag, current_size, close_conn, rx, tx, len;
     int end_server = FALSE;
@@ -154,7 +255,16 @@ int main(int argc, char *argv[]) {
                         break;
                     }
                     len = rx;
+                    jobj = json_tokener_parse(buffer);
                     printf("  %d bytes received\n", len);
+                    printf("JSON is:  %s \n", json_object_to_json_string(jobj));
+                    if (json_object_object_get_ex(jobj, "user", &test) != NULL){
+
+                        printf("Key exists congrats %s\n", json_object_to_json_string(test));
+                    }
+                    else {
+                        printf("Key Does not exisst");
+                    }
 //                    tx = send(poll_set[i].fd, buffer, rx, 0);
                     if (send(poll_set[i].fd, buffer, rx, 0) < 0){
                         perror("  send() failed");
